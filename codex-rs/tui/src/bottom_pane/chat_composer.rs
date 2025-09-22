@@ -203,7 +203,7 @@ impl ChatComposer {
     pub fn handle_paste(&mut self, pasted: String) -> bool {
         let char_count = pasted.chars().count();
         if char_count > LARGE_PASTE_CHAR_THRESHOLD {
-            let placeholder = format!("[Pasted Content {char_count} chars]");
+            let placeholder = format!("[已粘贴内容 {char_count} 字符]");
             self.textarea.insert_element(&placeholder);
             self.pending_pastes.push((placeholder, pasted));
         } else if char_count > 1 && self.handle_paste_image_path(pasted.clone()) {
@@ -271,7 +271,7 @@ impl ChatComposer {
 
     /// Attempt to start a burst by retro-capturing recent chars before the cursor.
     pub fn attach_image(&mut self, path: PathBuf, width: u32, height: u32, format_label: &str) {
-        let placeholder = format!("[image {width}x{height} {format_label}]");
+    let placeholder = format!("[图片 {width}x{height} {format_label}]");
         // Insert as an element to match large paste placeholder behavior:
         // styled distinctly and treated atomically for cursor/mutations.
         self.textarea.insert_element(&placeholder);
@@ -1266,14 +1266,14 @@ impl WidgetRef for ChatComposer {
                 };
                 let mut hint: Vec<Span<'static>> = if self.ctrl_c_quit_hint {
                     let ctrl_c_followup = if self.is_task_running {
-                        " to interrupt"
+                        " 以中断"
                     } else {
-                        " to quit"
+                        " 以退出"
                     };
                     vec![
                         " ".into(),
                         key_hint::ctrl('C'),
-                        " again".into(),
+                        " 再按一次".into(),
                         ctrl_c_followup.into(),
                     ]
                 } else {
@@ -1284,20 +1284,20 @@ impl WidgetRef for ChatComposer {
                     };
                     vec![
                         key_hint::plain('⏎'),
-                        " send   ".into(),
+                        " 发送   ".into(),
                         newline_hint_key,
-                        " newline   ".into(),
+                        " 换行   ".into(),
                         key_hint::ctrl('T'),
-                        " transcript   ".into(),
+                        " 记录   ".into(),
                         key_hint::ctrl('C'),
-                        " quit".into(),
+                        " 退出".into(),
                     ]
                 };
 
-                if !self.ctrl_c_quit_hint && self.esc_backtrack_hint {
+                    if !self.ctrl_c_quit_hint && self.esc_backtrack_hint {
                     hint.push("   ".into());
                     hint.push(key_hint::plain("Esc"));
-                    hint.push(" edit prev".into());
+                    hint.push(" 编辑上条".into());
                 }
 
                 // Append token/context usage info to the footer hints when available.
@@ -1306,7 +1306,7 @@ impl WidgetRef for ChatComposer {
                     hint.push("   ".into());
                     hint.push(
                         Span::from(format!(
-                            "{} tokens used",
+                            "{} 个令牌已使用",
                             format_si_suffix(token_usage.blended_total())
                         ))
                         .style(Style::default().add_modifier(Modifier::DIM)),
@@ -1325,7 +1325,7 @@ impl WidgetRef for ChatComposer {
                         };
                         hint.push("   ".into());
                         hint.push(Span::styled(
-                            format!("{percent_remaining}% context left"),
+                            format!("{percent_remaining}% 上下文剩余"),
                             context_style,
                         ));
                     }
@@ -1390,7 +1390,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1409,30 +1409,30 @@ mod tests {
         let mut hint_row: Option<(u16, String)> = None;
         for y in 0..area.height {
             let row = row_to_string(y);
-            if row.contains(" send") {
+            if row.contains(" 发送") {
                 hint_row = Some((y, row));
                 break;
             }
         }
 
         let (hint_row_idx, hint_row_contents) =
-            hint_row.expect("expected footer hint row to be rendered");
+            hint_row.expect("期望渲染底部提示行");
         assert_eq!(
             hint_row_idx,
             area.height - 1,
-            "hint row should occupy the bottom line: {hint_row_contents:?}",
+            "提示行应位于底部行: {hint_row_contents:?}",
         );
 
         assert!(
             hint_row_idx > 0,
-            "expected a spacing row above the footer hints",
+            "期望在提示行上方有空行",
         );
 
         let spacing_row = row_to_string(hint_row_idx - 1);
         assert_eq!(
             spacing_row.trim(),
             "",
-            "expected blank spacing row above hints but saw: {spacing_row:?}",
+            "期望提示上方为空白行，但看到: {spacing_row:?}",
         );
     }
 
@@ -1597,7 +1597,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1610,7 +1610,7 @@ mod tests {
             composer.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match result {
             InputResult::Submitted(text) => assert_eq!(text, "hello"),
-            _ => panic!("expected Submitted"),
+            _ => panic!("期望 Submitted"),
         }
     }
 
@@ -1626,7 +1626,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1637,7 +1637,7 @@ mod tests {
 
         match result {
             InputResult::None => {}
-            other => panic!("expected None for empty enter, got: {other:?}"),
+            other => panic!("空回车期望 None, 实际: {other:?}"),
         }
     }
 
@@ -1653,14 +1653,14 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
         let large = "x".repeat(LARGE_PASTE_CHAR_THRESHOLD + 10);
         let needs_redraw = composer.handle_paste(large.clone());
         assert!(needs_redraw);
-        let placeholder = format!("[Pasted Content {} chars]", large.chars().count());
+    let placeholder = format!("[已粘贴内容 {} 字符]", large.chars().count());
         assert_eq!(composer.textarea.text(), placeholder);
         assert_eq!(composer.pending_pastes.len(), 1);
         assert_eq!(composer.pending_pastes[0].0, placeholder);
@@ -1670,7 +1670,7 @@ mod tests {
             composer.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match result {
             InputResult::Submitted(text) => assert_eq!(text, large),
-            _ => panic!("expected Submitted"),
+            _ => panic!("期望 Submitted"),
         }
         assert!(composer.pending_pastes.is_empty());
     }
@@ -1688,7 +1688,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1729,7 +1729,7 @@ mod tests {
                 true,
                 sender.clone(),
                 false,
-                "Ask Codex to do anything".to_string(),
+                "向 Codex 提问".to_string(),
                 false,
             );
 
@@ -1772,7 +1772,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1800,7 +1800,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+                "向 Codex 提问".to_string(),
             false,
         );
         type_chars_humanlike(&mut composer, &['/', 'm', 'o']);
@@ -1811,7 +1811,7 @@ mod tests {
                     assert_eq!(cmd.command(), "model")
                 }
                 Some(CommandItem::UserPrompt(_)) => {
-                    panic!("unexpected prompt selected for '/mo'")
+                    panic!("在 '/mo' 中意外选择了提示")
                 }
                 None => panic!("no selected command for '/mo'"),
             },
@@ -1843,7 +1843,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1861,9 +1861,9 @@ mod tests {
                 assert_eq!(cmd.command(), "init");
             }
             InputResult::Submitted(text) => {
-                panic!("expected command dispatch, but composer submitted literal text: {text}")
+                panic!("期望命令分发，但 composer 提交了文本: {text}")
             }
-            InputResult::None => panic!("expected Command result for '/init'"),
+            InputResult::None => panic!("期望 '/init' 返回 Command 结果"),
         }
         assert!(composer.textarea.is_empty(), "composer should be cleared");
     }
@@ -1880,7 +1880,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1905,7 +1905,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1919,9 +1919,9 @@ mod tests {
                 assert_eq!(cmd.command(), "mention");
             }
             InputResult::Submitted(text) => {
-                panic!("expected command dispatch, but composer submitted literal text: {text}")
+                panic!("期望命令分发，但 composer 提交了文本: {text}")
             }
-            InputResult::None => panic!("expected Command result for '/mention'"),
+            InputResult::None => panic!("期望 '/mention' 返回 Command 结果"),
         }
         assert!(composer.textarea.is_empty(), "composer should be cleared");
         composer.insert_str("@");
@@ -1940,7 +1940,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -1961,7 +1961,7 @@ mod tests {
             .map(|(content, is_large)| {
                 composer.handle_paste(content.clone());
                 if *is_large {
-                    let placeholder = format!("[Pasted Content {} chars]", content.chars().count());
+                    let placeholder = format!("[已粘贴内容 {} 字符]", content.chars().count());
                     expected_text.push_str(&placeholder);
                     expected_pending_count += 1;
                 } else {
@@ -1976,19 +1976,19 @@ mod tests {
             states,
             vec![
                 (
-                    format!("[Pasted Content {} chars]", test_cases[0].0.chars().count()),
+                    format!("[已粘贴内容 {} 字符]", test_cases[0].0.chars().count()),
                     1
                 ),
                 (
                     format!(
-                        "[Pasted Content {} chars] and ",
+                        "[已粘贴内容 {} 字符] and ",
                         test_cases[0].0.chars().count()
                     ),
                     1
                 ),
                 (
                     format!(
-                        "[Pasted Content {} chars] and [Pasted Content {} chars]",
+                        "[已粘贴内容 {} 字符] and [已粘贴内容 {} 字符]",
                         test_cases[0].0.chars().count(),
                         test_cases[2].0.chars().count()
                     ),
@@ -2019,7 +2019,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2037,7 +2037,7 @@ mod tests {
             .map(|(content, is_large)| {
                 composer.handle_paste(content.clone());
                 if *is_large {
-                    let placeholder = format!("[Pasted Content {} chars]", content.chars().count());
+                    let placeholder = format!("[已粘贴内容 {} 字符]", content.chars().count());
                     current_pos += placeholder.len();
                 } else {
                     current_pos += content.len();
@@ -2073,7 +2073,7 @@ mod tests {
         assert_eq!(
             deletion_states,
             vec![
-                (" and [Pasted Content 1006 chars]".to_string(), 1),
+                (" and [已粘贴内容 1006 字符]".to_string(), 1),
                 (" and ".to_string(), 0),
             ]
         );
@@ -2091,7 +2091,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2102,7 +2102,7 @@ mod tests {
         ];
 
         let paste = "x".repeat(LARGE_PASTE_CHAR_THRESHOLD + 4);
-        let placeholder = format!("[Pasted Content {} chars]", paste.chars().count());
+    let placeholder = format!("[已粘贴内容 {} 字符]", paste.chars().count());
 
         let states: Vec<_> = test_cases
             .into_iter()
@@ -2139,7 +2139,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
         let path = PathBuf::from("/tmp/image1.png");
@@ -2148,8 +2148,8 @@ mod tests {
         let (result, _) =
             composer.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match result {
-            InputResult::Submitted(text) => assert_eq!(text, "[image 32x16 PNG] hi"),
-            _ => panic!("expected Submitted"),
+            InputResult::Submitted(text) => assert_eq!(text, "[图片 32x16 PNG] hi"),
+            _ => panic!("期望 Submitted"),
         }
         let imgs = composer.take_recent_submission_images();
         assert_eq!(vec![path], imgs);
@@ -2163,7 +2163,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
         let path = PathBuf::from("/tmp/image2.png");
@@ -2171,8 +2171,8 @@ mod tests {
         let (result, _) =
             composer.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         match result {
-            InputResult::Submitted(text) => assert_eq!(text, "[image 10x5 PNG]"),
-            _ => panic!("expected Submitted"),
+            InputResult::Submitted(text) => assert_eq!(text, "[图片 10x5 PNG]"),
+            _ => panic!("期望 Submitted"),
         }
         let imgs = composer.take_recent_submission_images();
         assert_eq!(imgs.len(), 1);
@@ -2188,7 +2188,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
         let path = PathBuf::from("/tmp/image3.png");
@@ -2229,7 +2229,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2244,7 +2244,7 @@ mod tests {
         composer.handle_key_event(KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE));
 
         assert_eq!(composer.attached_images.len(), 1);
-        assert!(composer.textarea.text().starts_with("[image 10x5 PNG]"));
+    assert!(composer.textarea.text().starts_with("[图片 10x5 PNG]"));
     }
 
     #[test]
@@ -2255,7 +2255,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2281,7 +2281,7 @@ mod tests {
         assert_eq!(
             vec![AttachedImage {
                 path: path2,
-                placeholder: "[image 10x5 PNG]".to_string()
+                placeholder: "[图片 10x5 PNG]".to_string()
             }],
             composer.attached_images,
             "one image mapping remains"
@@ -2302,13 +2302,13 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
         let needs_redraw = composer.handle_paste(tmp_path.to_string_lossy().to_string());
         assert!(needs_redraw);
-        assert!(composer.textarea.text().starts_with("[image 3x2 PNG] "));
+    assert!(composer.textarea.text().starts_with("[图片 3x2 PNG] "));
 
         let imgs = composer.take_recent_submission_images();
         assert_eq!(imgs, vec![tmp_path]);
@@ -2324,7 +2324,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2358,7 +2358,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2382,7 +2382,7 @@ mod tests {
         );
         std::thread::sleep(ChatComposer::recommended_paste_flush_delay());
         let flushed = composer.flush_paste_burst_if_due();
-        assert!(flushed, "expected buffered text to flush after stop");
+    assert!(flushed, "期望在停止后缓冲的文本被刷新");
         assert_eq!(composer.textarea.text(), "a".repeat(count));
         assert!(
             composer.pending_pastes.is_empty(),
@@ -2402,7 +2402,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 
@@ -2416,9 +2416,9 @@ mod tests {
         assert!(composer.textarea.text().is_empty());
         std::thread::sleep(ChatComposer::recommended_paste_flush_delay());
         let flushed = composer.flush_paste_burst_if_due();
-        assert!(flushed, "expected flush after stopping fast input");
+    assert!(flushed, "在停止快速输入后期望刷新");
 
-        let expected_placeholder = format!("[Pasted Content {count} chars]");
+    let expected_placeholder = format!("[已粘贴内容 {count} 字符]");
         assert_eq!(composer.textarea.text(), expected_placeholder);
         assert_eq!(composer.pending_pastes.len(), 1);
         assert_eq!(composer.pending_pastes[0].0, expected_placeholder);
@@ -2434,7 +2434,7 @@ mod tests {
             true,
             sender,
             false,
-            "Ask Codex to do anything".to_string(),
+            "向 Codex 提问".to_string(),
             false,
         );
 

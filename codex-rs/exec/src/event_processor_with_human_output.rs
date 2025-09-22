@@ -145,7 +145,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         const VERSION: &str = env!("CARGO_PKG_VERSION");
         ts_println!(
             self,
-            "OpenAI Codex v{} (research preview)\n--------",
+            "OpenAI Codex v{}（研究 预览）\n--------",
             VERSION
         );
 
@@ -163,7 +163,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         ts_println!(
             self,
             "{}\n{}",
-            "User instructions:".style(self.bold).style(self.cyan),
+            "用户指令：".style(self.bold).style(self.cyan),
             prompt
         );
     }
@@ -172,7 +172,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         let Event { id: _, msg } = event;
         match msg {
             EventMsg::Error(ErrorEvent { message }) => {
-                let prefix = "ERROR:".style(self.red);
+                let prefix = "错误：".style(self.red);
                 ts_println!(self, "{prefix} {message}");
             }
             EventMsg::BackgroundEvent(BackgroundEventEvent { message }) => {
@@ -194,7 +194,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 if let Some(usage_info) = ev.info {
                     ts_println!(
                         self,
-                        "tokens used: {}",
+                        "使用的 token： {}",
                         format_with_separators(usage_info.total_token_usage.blended_total())
                     );
                 }
@@ -216,7 +216,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     ts_println!(
                         self,
                         "{}\n",
-                        "thinking".style(self.italic).style(self.magenta),
+                        "思考中".style(self.italic).style(self.magenta),
                     );
                     self.reasoning_started = true;
                 }
@@ -287,7 +287,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 );
                 ts_println!(
                     self,
-                    "{} {} in {}",
+                    "{} {} 在 {}",
                     "exec".style(self.magenta),
                     escape_command(&command).style(self.bold),
                     cwd.to_string_lossy(),
@@ -319,11 +319,11 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     .join("\n");
                 match exit_code {
                     0 => {
-                        let title = format!("{call} succeeded{duration}:");
+                        let title = format!("{call} 成功{duration}：");
                         ts_println!(self, "{}", title.style(self.green));
                     }
                     _ => {
-                        let title = format!("{call} exited {exit_code}{duration}:");
+                        let title = format!("{call} 退出 {exit_code}{duration}：");
                         ts_println!(self, "{}", title.style(self.red));
                     }
                 }
@@ -336,7 +336,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 ts_println!(
                     self,
                     "{} {}",
-                    "tool".style(self.magenta),
+                    "工具".style(self.magenta),
                     format_mcp_invocation(&invocation).style(self.bold),
                 );
             }
@@ -351,13 +351,9 @@ impl EventProcessor for EventProcessorWithHumanOutput {
 
                 let duration = format!(" in {}", format_duration(duration));
 
-                let status_str = if is_success { "success" } else { "failed" };
+                let status_str = if is_success { "成功" } else { "失败" };
                 let title_style = if is_success { self.green } else { self.red };
-                let title = format!(
-                    "{} {status_str}{duration}:",
-                    format_mcp_invocation(&invocation)
-                );
-
+                let title = format!("{} {status_str}{duration}：", format_mcp_invocation(&invocation));
                 ts_println!(self, "{}", title.style(title_style));
 
                 if let Ok(res) = result {
@@ -372,7 +368,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
             }
             EventMsg::WebSearchBegin(WebSearchBeginEvent { call_id: _ }) => {}
             EventMsg::WebSearchEnd(WebSearchEndEvent { call_id: _, query }) => {
-                ts_println!(self, "🌐 Searched: {query}");
+                ts_println!(self, "🌐 搜索： {query}");
             }
             EventMsg::PatchApplyBegin(PatchApplyBeginEvent {
                 call_id,
@@ -492,7 +488,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 }
             }
             EventMsg::TurnDiff(TurnDiffEvent { unified_diff }) => {
-                ts_println!(self, "{}", "turn diff:".style(self.magenta));
+                ts_println!(self, "{}", "回合差异：".style(self.magenta));
                 println!("{unified_diff}");
             }
             EventMsg::ExecApprovalRequest(_) => {
@@ -530,17 +526,17 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 ts_println!(
                     self,
                     "{} {}",
-                    "codex session".style(self.magenta).style(self.bold),
+                    "codex 会话".style(self.magenta).style(self.bold),
                     conversation_id.to_string().style(self.dimmed)
                 );
 
-                ts_println!(self, "model: {}", model);
+                ts_println!(self, "模型： {}", model);
                 println!();
             }
             EventMsg::PlanUpdate(plan_update_event) => {
                 let UpdatePlanArgs { explanation, plan } = plan_update_event;
-                ts_println!(self, "explanation: {explanation:?}");
-                ts_println!(self, "plan: {plan:?}");
+                ts_println!(self, "解释： {explanation:?}");
+                ts_println!(self, "计划： {plan:?}");
             }
             EventMsg::GetHistoryEntryResponse(_) => {
                 // Currently ignored in exec output.
@@ -553,13 +549,13 @@ impl EventProcessor for EventProcessorWithHumanOutput {
             }
             EventMsg::TurnAborted(abort_reason) => match abort_reason.reason {
                 TurnAbortReason::Interrupted => {
-                    ts_println!(self, "task interrupted");
+                    ts_println!(self, "任务被中断");
                 }
                 TurnAbortReason::Replaced => {
-                    ts_println!(self, "task aborted: replaced by a new task");
+                    ts_println!(self, "任务终止：已被新任务替换");
                 }
                 TurnAbortReason::ReviewEnded => {
-                    ts_println!(self, "task aborted: review ended");
+                    ts_println!(self, "任务终止：评审已结束");
                 }
             },
             EventMsg::ShutdownComplete => return CodexStatus::Shutdown,
