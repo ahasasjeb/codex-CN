@@ -1,3 +1,5 @@
+# Codex 汉化版，基于0.39到下一个版本之间的过渡版本
+
 <h1 align="center">OpenAI Codex CLI</h1>
 
 <p align="center"><code>npm i -g @openai/codex</code><br />or <code>brew install codex</code></p>
