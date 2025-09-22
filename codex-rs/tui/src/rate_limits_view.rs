@@ -127,16 +127,32 @@ fn approximate_duration(minutes: Option<u64>) -> Option<(u64, DurationUnit)> {
 fn pluralize_unit(unit: DurationUnit, value: u64) -> String {
     match unit {
         DurationUnit::Minute => {
-            "分钟".to_string()
+            if value == 1 {
+                "分钟".to_string()
+            } else {
+                "分钟".to_string()
+            }
         }
         DurationUnit::Hour => {
-            "小时".to_string()
+            if value == 1 {
+                "小时".to_string()
+            } else {
+                "小时".to_string()
+            }
         }
         DurationUnit::Day => {
-            "天".to_string()
+            if value == 1 {
+                "天".to_string()
+            } else {
+                "天".to_string()
+            }
         }
         DurationUnit::Week => {
-            "每周".to_string()
+            if value == 1 {
+                "周".to_string()
+            } else {
+                "周".to_string()
+            }
         }
     }
 }
@@ -371,7 +387,7 @@ impl GridLayout {
         lines.push("".into());
 
         if counts.white_cells == 0 {
-            lines.push(vec!["  (No unused weekly capacity remaining)".dim()].into());
+            lines.push(vec!["  （没有剩余的周容量）".dim()].into());
             lines.push("".into());
         }
 
@@ -473,8 +489,8 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-    assert!(summary.contains("小时限制 (≈5 hours window): 已使用 30.0%" ) || summary.contains("小时限制 (≈5 hours window): 30.0% 已使用"));
-    assert!(summary.contains("每周限制 (≈1 week window): 已使用 60.0%" ) || summary.contains("每周限制 (≈1 week window): 60.0% 已使用"));
+            assert!(summary.contains("小时限制 (≈5小时 窗口): 已使用 30.0%"));
+            assert!(summary.contains("每周限制 (≈1周 窗口): 已使用 60.0%"));
     }
 
     #[test]
