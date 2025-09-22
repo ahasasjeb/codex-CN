@@ -93,14 +93,14 @@ impl RateLimitMetrics {
 
 fn format_window_label(minutes: Option<u64>) -> String {
     approximate_duration(minutes)
-        .map(|(value, unit)| format!("≈{value} {} window", pluralize_unit(unit, value)))
-        .unwrap_or_else(|| "window unknown".to_string())
+        .map(|(value, unit)| format!("≈{value}{} 窗口", pluralize_unit(unit, value)))
+        .unwrap_or_else(|| "窗口未知".to_string())
 }
 
 fn format_reset_hint(minutes: Option<u64>) -> String {
     approximate_duration(minutes)
-        .map(|(value, unit)| format!("≈{value} {}", pluralize_unit(unit, value)))
-        .unwrap_or_else(|| "unknown".to_string())
+        .map(|(value, unit)| format!("≈{value}{}", pluralize_unit(unit, value)))
+        .unwrap_or_else(|| "未知".to_string())
 }
 
 fn approximate_duration(minutes: Option<u64>) -> Option<(u64, DurationUnit)> {
@@ -127,32 +127,16 @@ fn approximate_duration(minutes: Option<u64>) -> Option<(u64, DurationUnit)> {
 fn pluralize_unit(unit: DurationUnit, value: u64) -> String {
     match unit {
         DurationUnit::Minute => {
-            if value == 1 {
-                "minute".to_string()
-            } else {
-                "minutes".to_string()
-            }
+            "分钟".to_string()
         }
         DurationUnit::Hour => {
-            if value == 1 {
-                "hour".to_string()
-            } else {
-                "hours".to_string()
-            }
+            "小时".to_string()
         }
         DurationUnit::Day => {
-            if value == 1 {
-                "day".to_string()
-            } else {
-                "days".to_string()
-            }
+            "天".to_string()
         }
         DurationUnit::Week => {
-            if value == 1 {
-                "week".to_string()
-            } else {
-                "weeks".to_string()
-            }
+            "每周".to_string()
         }
     }
 }
@@ -175,15 +159,15 @@ fn build_summary_lines(metrics: &RateLimitMetrics) -> Vec<Line<'static>> {
     let mut lines: Vec<Line<'static>> = vec![
         "/limits".magenta().into(),
         "".into(),
-        vec!["Rate limit usage snapshot".bold()].into(),
-        vec!["  Tip: run `/limits` right after Codex replies for freshest numbers.".dim()].into(),
+        vec!["限流使用快照".bold()].into(),
+        vec!["  提示：在 Codex 回复后立即运行 `/limits` 可获得最新数据。".dim()].into(),
         build_usage_line(
-            "  • Hourly limit",
+            "  • 小时限制",
             &metrics.hourly_window_label,
             metrics.hourly_used,
         ),
         build_usage_line(
-            "  • Weekly limit",
+            "  • 每周限制",
             &metrics.weekly_window_label,
             metrics.weekly_used,
         ),
@@ -197,31 +181,31 @@ fn build_usage_line(label: &str, window_label: &str, used_percent: f64) -> Line<
         label.to_string().into(),
         format!(" ({window_label})").dim(),
         ": ".into(),
-        format!("{used_percent:.1}% used").dark_gray().bold(),
+        format!("已使用 {used_percent:.1}%").dark_gray().bold(),
     ])
 }
 
 fn build_status_line(metrics: &RateLimitMetrics) -> Line<'static> {
     let mut spans: Vec<Span<'static>> = Vec::new();
     if metrics.weekly_exhausted() || metrics.hourly_exhausted() {
-        spans.push("  Rate limited: ".into());
+        spans.push("  超出速率限制：".into());
         let reason = match (metrics.hourly_exhausted(), metrics.weekly_exhausted()) {
-            (true, true) => "weekly and hourly windows exhausted",
-            (true, false) => "hourly window exhausted",
-            (false, true) => "weekly window exhausted",
+            (true, true) => "每周与小时窗口均已耗尽",
+            (true, false) => "小时窗口已耗尽",
+            (false, true) => "每周窗口已耗尽",
             (false, false) => unreachable!(),
         };
         spans.push(reason.red());
         if metrics.hourly_exhausted() {
-            spans.push(" — hourly resets in ".into());
+            spans.push(" — 小时窗口将于 ".into());
             spans.push(metrics.hourly_reset_hint.clone().dim());
         }
         if metrics.weekly_exhausted() {
-            spans.push(" — weekly resets in ".into());
+            spans.push(" — 每周窗口将于 ".into());
             spans.push(metrics.weekly_reset_hint.clone().dim());
         }
     } else {
-        spans.push("  Within current limits".green());
+        spans.push("  在当前限制范围内".green());
     }
     Line::from(spans)
 }
@@ -231,23 +215,23 @@ fn build_legend_lines(show_gauge: bool) -> Vec<Line<'static>> {
         return Vec::new();
     }
     vec![
-        vec!["Legend".bold()].into(),
+        vec!["图例".bold()].into(),
         vec![
             "  • ".into(),
-            "Dark gray".dark_gray().bold(),
-            " = weekly usage so far".into(),
+            "深灰色".dark_gray().bold(),
+            " = 迄今为止的每周使用量".into(),
         ]
         .into(),
         vec![
             "  • ".into(),
-            "Green".green().bold(),
-            " = hourly capacity still available".into(),
+            "绿色".green().bold(),
+            " = 仍可用的小时容量".into(),
         ]
         .into(),
         vec![
             "  • ".into(),
-            "Default".bold(),
-            " = weekly capacity beyond the hourly window".into(),
+            "默认色".bold(),
+            " = 超出小时窗口的每周容量".into(),
         ]
         .into(),
     ]
@@ -464,12 +448,12 @@ mod tests {
         assert!(display.summary_lines.iter().any(|line| {
             line.spans
                 .iter()
-                .any(|span| span.content.contains("Weekly limit"))
+                .any(|span| span.content.contains("每周限制"))
         }));
         assert!(display.summary_lines.iter().any(|line| {
             line.spans
                 .iter()
-                .any(|span| span.content.contains("Hourly limit"))
+                .any(|span| span.content.contains("小时限制"))
         }));
         assert!(!display.gauge_lines(80).is_empty());
     }
@@ -489,8 +473,8 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert!(summary.contains("Hourly limit (≈5 hours window): 30.0% used"));
-        assert!(summary.contains("Weekly limit (≈1 week window): 60.0% used"));
+    assert!(summary.contains("小时限制 (≈5 hours window): 已使用 30.0%" ) || summary.contains("小时限制 (≈5 hours window): 30.0% 已使用"));
+    assert!(summary.contains("每周限制 (≈1 week window): 已使用 60.0%" ) || summary.contains("每周限制 (≈1 week window): 60.0% 已使用"));
     }
 
     #[test]
